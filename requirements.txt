@@ -1,0 +1,27 @@
+# packaging
+pip>=9
+setuptools>=26
+twine
+wheel>=0.29
+
+# data science
+numpy
+pandas
+scikit-learn
+matplotlib
+
+#sklearn
+scikit-learn
+yolov8
+
+# utilities
+
+# jupyter
+jupyterlab==3.4.8
+requests
+
+#Drone
+djitellopy
+
+#AI
+ultralytics
