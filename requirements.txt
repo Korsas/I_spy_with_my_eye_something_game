@@ -6,22 +6,17 @@ wheel>=0.29
 
 # data science
 numpy
-pandas
-scikit-learn
-matplotlib
 
-#sklearn
+#ML
 scikit-learn
-yolov8
 
 # utilities
 
 # jupyter
-jupyterlab==3.4.8
-requests
 
 #Drone
-djitellopy
+djitellopy==2.4.0
+supervision==0.3.0
 
 #AI
 ultralytics

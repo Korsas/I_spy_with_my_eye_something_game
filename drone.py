@@ -4,10 +4,13 @@ import cv2
 
 drone = Tello()
 drone.connect()
-print(drone.get_battery)
-
+battery = drone.get_battery()
+print(f"battery status: {battery}%")
+Stream()
 drone.takeoff()
-print(drone.get_current_state)
-print(drone.get_height)
-
+state = drone.get_current_state()
+print(state)
+drone.rotate_clockwise(90)
+height_position = drone.get_height()
+print(f"{height_position} cm")
 drone.land()
