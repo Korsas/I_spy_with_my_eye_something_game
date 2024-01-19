@@ -1,0 +1,22 @@
+# packaging
+pip>=9
+setuptools>=26
+twine
+wheel>=0.29
+
+# data science
+numpy==1.23.4
+
+#ML
+scikit-learn
+Pillow==9.2.0
+
+# utilities
+opencv-python==4.6.0.66
+# jupyter
+
+#Drone
+djitellopy==2.4.0
+
+#AI
+ultralytics
