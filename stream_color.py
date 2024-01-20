@@ -1,7 +1,17 @@
 import cv2
-from utils import choose_colour, get_limits
+from utils import choose_colour, get_limits, base_colour_selection
 from PIL import Image
 from djitellopy import Tello
+import numpy as np
+
+#simple test colour
+##colour_name, lowerLimit, upperLimit = base_colour_selection()
+
+
+# multiple test colours
+searching_colour, colour_name = choose_colour()
+print(colour_name)
+print(searching_colour)
 
 # Initializing the Tello drone
 tello = Tello()
@@ -13,9 +23,7 @@ tello.streamon()
 video_stream_url = "udp://0.0.0.0:11111"
 feed = cv2.VideoCapture(video_stream_url)
 
-yellow = [0, 255, 255]
 
-searching_colour = choose_colour()
 
 #feed = cv2.VideoCapture(0)
 
@@ -24,7 +32,9 @@ while True:
 
     hsvImage = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    lowerLimit, upperLimit = get_limits(color=yellow)
+    lowerLimit, upperLimit = get_limits(color=searching_colour)
+
+
 
     mask = cv2.inRange(hsvImage, lowerLimit, upperLimit)
     #contours and noice cancellation
@@ -36,8 +46,16 @@ while True:
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),3)
 
-    cv2.imshow('Color Track', mask)
-    cv2.imshow('frame', frame)
+
+
+    #colour_mask = cv2.bitwise_and(frame,frame,mask=mask)
+
+    # stack all views
+    mask_fit= cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    interface = np.hstack((frame, mask_fit))
+
+    cv2.imshow(f'Color Track: {colour_name}', interface)
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

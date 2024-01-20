@@ -1,9 +1,13 @@
 import cv2
 import random
 import numpy as np
+import time
+from djitellopy import Tello
 
-colours_lib = ["yellow","red","green"]
-colour_selection = {"yellow":[0,255,255],"red":[0,0,255],"green":[0,255,0]}
+colours_lib_basis = ["red","green","blue"]
+colours_lib = ["yellow","red","green","blue","orange","pink","brown","grey"]
+colour_selection = {"yellow":[0,255,255],"red":[0,0,255],"green":[0,153,0],"blue":[255,0,0],"orange":[0,128,255],"pink":[203,192,255],"brown":[19,69,139],"grey":[128,128,128]}
+
 
 def choose_colour(list_names=colours_lib,colour_codes=colour_selection):
     # Colours in BGR colorspaces
@@ -30,3 +34,40 @@ def get_limits(color):
         upperLimit = np.array([hue + 10, 255, 255], dtype=np.uint8)
 
     return lowerLimit, upperLimit
+
+def base_colour_selection(list_names_hardcoded=colours_lib_basis):
+    # hardcoded optimized colours
+    selected_colour = random.choice(list_names_hardcoded)
+    if selected_colour == "red":
+        lowerLimit = np.array([161,155,84])
+        upperLimit = np.array([179,255,255])
+    elif selected_colour == "blue":
+        lowerLimit = np.array([94,80,2])
+        upperLimit = np.array([126,255,255])
+    elif selected_colour == "green":
+        lowerLimit = np.array([25,52,72])
+        upperLimit = np.array([102,255,255])
+
+    return selected_colour,lowerLimit,upperLimit
+
+
+def land_if_distance_sufficient(tello,min_distance=1.65):
+    tello = Tello()
+    # Warte auf stabile Messungen vom TOF-Sensor
+    time.sleep(5)
+
+    # Lese die TOF-Entfernung
+    while True:
+        current_height = tello.get_distance_tof()
+
+        #print(f"TOF Distance: {tof_distance} m")
+
+        # Überprüfe, ob die gemessene Entfernung ausreichend ist
+        if current_height is not None and current_height >= min_distance:
+            print("Sichere Landung möglich. Starte Landeprozess.")
+            tello.land()
+            break
+        else:
+            print("Nicht genügend Platz zum Landen oder unzureichende TOF-Daten.")
+            tello.move_forward(10)
+            time.sleep(0.1)
