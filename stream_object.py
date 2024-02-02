@@ -1,56 +1,64 @@
 import cv2
+from utils import choose_colour, get_limits, base_colour_selection, stay_center, color_and_contour_detection, land_if_distance_sufficient
 from djitellopy import Tello
-from ultralytics import YOLO
+import numpy as np
+
+#simple test colour
+colour_name, lowerLimit, upperLimit = base_colour_selection()
+
+
+# multiple test colours
+searching_colour, colour_name = choose_colour()
+print(colour_name)
+print(searching_colour)
 
 # Initializing the Tello drone
 tello = Tello()
 tello.connect()
-print(f"Battery Status: {tello.get_battery()}")
+print(f"Battery Status: {tello.get_battery()}%")
 tello.streamon()
 
+tello.takeoff()
+
+# Params of rotation:
+max_rotation_attempts = 4
+rotation_attempts = 0
+
 # Define the UDP video stream URL
-
-fifo_size = "?fifo_size=278876"
-# 50*1024*1024/188 = 278876,595744681
-non_fatal_set = "&overrun_nonfatal=1"
-secondary_ip = "udp://192.168.10.1:11111"
-cam_ip = "udp://0.0.0.0:11111"
-
-video_stream_url = f"{secondary_ip}{fifo_size}{non_fatal_set}"
-print(video_stream_url)
+video_stream_url = "udp://0.0.0.0:11111"
 feed = cv2.VideoCapture(video_stream_url)
 
-#feed = cv2.VideoCapture(0)
-
-model = YOLO("yolov8n.pt")
-frame_counter = 0
-
 while True:
-    # Read a frame from the video
     ret, frame = feed.read()
-    frame_counter += 1
-    print(frame_counter)
+    # Shape Check Tello: 480, 640 , 3
 
-    # Run YOLOv8 inference on the frame
-    results = model(source=frame, stream=True)
-    written_results = model.predict(source=frame,stream=True)
+    result_frame, cx , cy, M  = color_and_contour_detection(frame=frame,lower_limit=lowerLimit,upper_limit=upperLimit)
+
+    # Steuern Sie die Drohne basierend auf cx, cy
+    cv2.imshow(f'Color Track: {colour_name}', result_frame)
+
+    # loop for no object found
+    if cx == 0:
+        print("No coloured Object found. Roate...")
+        tello.rotate_clockwise
+        rotation_attempts += 1
+
+    else:
+        stay_center(cx, cy, frame.shape[1])
+
+        cv2.imwrite(f'photo_{rotation_attempts}.jpg', result_frame)
+        print(f'Photo {rotation_attempts} taken.')
 
 
-    # Visualize the results on the frame
-    annotated_frame = next(results).plot()
-
-    # Display the annotated frame
-    cv2.imshow("YOLOv8 Inference", annotated_frame)
-
-    # Break the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 
-# Release the video capture object and close the display window
+
+# Video-Feed freigeben und Fenster schließen
+land_if_distance_sufficient(tello=tello,min_distance=1.70)
 feed.release()
 cv2.destroyAllWindows()
 
-# Disconnect and land the Tello drone
+# Disconnect und Land the Tello drone
 tello.streamoff()
-tello.land()
