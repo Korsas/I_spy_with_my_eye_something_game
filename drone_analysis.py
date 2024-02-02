@@ -13,6 +13,7 @@ drone.takeoff()
 imu_data = drone.query_attitude()
 print("IMU Data:", imu_data)
 time.sleep()
+
 # Tello height basic meassurement
 # tof = 81 cm distance_ground = 70 cm
 
@@ -25,11 +26,11 @@ print(f"TOF = {tof}")
 drone.move_up(x=100)
 drone.rotate_counter_clockwise(90)
 
-for i in range(15):
-    height_position = drone.get_height()
-    tof = drone.get_distance_tof()
-    print(f"{height_position} cm")
-    print(f"TOF = {tof}")
+imu_data = drone.query_attitude()
+print("IMU Data:", imu_data)
+
+time.sleep(3)
 
 
-land_if_distance_sufficient(tello=drone)
+
+land_if_distance_sufficient(tello=drone,min_distance=1.73)
