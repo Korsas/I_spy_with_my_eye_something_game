@@ -18,7 +18,7 @@ tello.connect()
 print(f"Battery Status: {tello.get_battery()}%")
 tello.streamon()
 
-tello.takeoff()
+##tello.takeoff()
 
 # Params of rotation:
 max_rotation_attempts = 4
@@ -34,17 +34,15 @@ while True:
 
     result_frame, cx , cy, M  = color_and_contour_detection(frame=frame,lower_limit=lowerLimit,upper_limit=upperLimit)
 
-    # Steuern Sie die Drohne basierend auf cx, cy
-    cv2.imshow(f'Color Track: {colour_name}', result_frame)
-
     # loop for no object found
     if cx == 0:
         print("No coloured Object found. Roate...")
-        tello.rotate_clockwise
+        tello.rotate_clockwise(90)
         rotation_attempts += 1
 
     else:
         stay_center(cx, cy, frame.shape[1])
+        print(f"Found a {colour_name} in the {rotation_attempts}th attempt")
 
         cv2.imwrite(f'photo_{rotation_attempts}.jpg', result_frame)
         print(f'Photo {rotation_attempts} taken.')
@@ -56,7 +54,8 @@ while True:
 
 
 # Video-Feed freigeben und Fenster schließen
-land_if_distance_sufficient(tello=tello,min_distance=1.70)
+##land_if_distance_sufficient(tello=tello,min_distance=1.70)
+keepRecording = False
 feed.release()
 cv2.destroyAllWindows()
 
