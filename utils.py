@@ -83,7 +83,6 @@ def base_colour_selection(list_names_hardcoded=colours_lib_basis):
 
     return selected_colour,lowerLimit,upperLimit
 
-
 def land_if_distance_sufficient(tello,min_distance=1.65):
     tello = Tello()
     # Warte auf stabile Messungen vom TOF-Sensor
@@ -142,12 +141,11 @@ def color_and_contour_detection(frame, lower_limit, upper_limit):
     cx, cy, M = None, None, None
     # Konturen finden und filtern
     contours, _ = cv2.findContours(imgDil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # Flächencheck
+    # select out of the three biggest
     valid_contours = [cnt for cnt in contours if 300 < cv2.contourArea(cnt) < 6000]
-    ##valid_contours = sorted(valid_contours, key=cv2.contourArea, reverse=True)
+    contours = sorted(valid_contours, key=cv2.contourArea, reverse=True)[:3]
 
-    if valid_contours:
-        # select out of the three biggest
+    if contours:
         random_conture = random.choice(valid_contours)
         masked_contour = cv2.bitwise_and(random_conture, random_conture, mask=color_mask)
 
@@ -167,7 +165,14 @@ def color_and_contour_detection(frame, lower_limit, upper_limit):
 
     return frame, cx, cy, M
 
-def simple_colour_detection(frame,colour_name, lower_limit, upper_limit):
+def simple_colour_detection(frame,colour_name=None, lower_limit=None, upper_limit=None):
+    if colour_name is None:
+        colour_name,lower_limit,upper_limit = base_colour_selection
+
+    x_mid = None
+    y_mid = None
+    coords = None
+
     while True:
         interface = frame.copy()
         # Shape Check Tello: 480, 640 , 3
@@ -193,10 +198,13 @@ def simple_colour_detection(frame,colour_name, lower_limit, upper_limit):
 
         contours, hierachy = cv2.findContours(imgDil, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+        valid_contours = [cnt for cnt in contours if 300 < cv2.contourArea(cnt) < 6000]
+        contours = sorted(valid_contours, key=cv2.contourArea, reverse=True)[:3]
+
         if len(contours) != 0:
             for contour in contours:
                 #filter out under 800 pixels and above 10k pixels
-                if cv2.contourArea(contour) > 400:
+                if cv2.contourArea(contour) > 600:
                     #Refine Contours
                     cv2.drawContours(interface,contour,0,(0,0,0),4)
                     epsilon = 0.02*cv2.arcLength(contour, closed=True)
@@ -209,31 +217,30 @@ def simple_colour_detection(frame,colour_name, lower_limit, upper_limit):
                     coords = (x_mid,y_mid)
                     cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),3)
                     cv2.putText(frame,colour_name,coords,fontFace=cv2.FONT_HERSHEY_DUPLEX,fontScale=1,color=(0,0,0),thickness=1)
-        return frame
+        if len(contours) == 0:
+            x_mid = None
+            y_mid = None
+            coords = None
+        return frame, x_mid, y_mid, coords
 
 
-
-def videoRecorder(tello,fps=25,fourcc='XVID'):
-    global keepRecording
-    global colour_name
-    global lower_limit
-    global upper_limit
+def video_recorder(frame=None,width=480,height=640,fps=25):
     keepRecording = True
-    # only with get_frame_read()
-    frame = tello.get_frame_read().frame
-    height, width, _ = frame.shape
+    tello = Tello()
+    set_in = False
 
-    video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc(*str(fourcc)), fps, (width, height))
+    if frame is None:
+        frame = tello.get_frame_read()
+        set_in = True
+
+    video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height))
 
     while keepRecording:
-        frame = tello.get_frame_read().frame
-        frame_w_r = simple_colour_detection(frame, colour_name, lower_limit, upper_limit)
-
-        frame_w_r= cv2.cvtColor(frame_w_r, cv2.COLOR_GRAY2RGB)
-        video.write(frame_w_r)
-        time.sleep(1/30)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        if set_in is True:
+            video.write(frame.frame)
+            time.sleep(1 / 25)
+        else:
+            video.write(frame)
+            time.sleep(1 / 25)
 
     video.release()
