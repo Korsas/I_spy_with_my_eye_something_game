@@ -244,3 +244,19 @@ def video_recorder(frame=None,width=480,height=640,fps=25):
             time.sleep(1 / 25)
 
     video.release()
+
+def crop_around_frame(frame, x_mid, y_mid, radius):
+
+    if x_mid is None or y_mid is None:
+        return frame  # Keine Objekte gefunden, gib das ursprüngliche Bild zurück
+
+    # Berechne die Grenzen für das Zuschneiden
+    x_start = max(0, x_mid - radius)
+    y_start = max(0, y_mid - radius)
+    x_end = min(frame.shape[1], x_mid + radius)
+    y_end = min(frame.shape[0], y_mid + radius)
+
+    # Zuschneiden des Bereichs um den Rahmen
+    cropped_image = frame[y_start:y_end, x_start:x_end]
+
+    return cropped_image

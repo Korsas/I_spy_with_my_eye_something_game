@@ -6,3 +6,6 @@ yolov8x.pt
 yolov8n-cls.pt
 testing
 .avi
+.jpg
+.mp4
+.png

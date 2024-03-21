@@ -1,5 +1,5 @@
 import cv2
-from utils import choose_colour,simple_colour_detection, stay_center,land_if_distance_sufficient, video_recorder
+from utils import choose_colour,simple_colour_detection, crop_around_frame,land_if_distance_sufficient, video_recorder, base_colour_selection
 from djitellopy import Tello
 import numpy as np
 import time
@@ -10,13 +10,13 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 #simple test colour
-colour_name = "green"
-lower_limit = np.array([45,109,0],dtype=np.uint8)
-upper_limit = np.array([76,206,255],dtype=np.uint8)
+##colour_name = "green"
+##lower_limit = np.array([45,109,0],dtype=np.uint8)
+##upper_limit = np.array([76,206,255],dtype=np.uint8)
 
 
 #random test colour
-#colour_name, lower_limit, upper_limit = base_colour_selection()
+colour_name, lower_limit, upper_limit = base_colour_selection()
 print(colour_name)
 
 # Initializing the Tello drone
@@ -85,7 +85,9 @@ while rotation_attempts < max_rotation_attempts:
         ##stay_center(x_mid, y_mid, frame.shape[1])
         if not captured:
             if images_taken < max_images_per_rotation:
-                cv2.imwrite(f'photo_{colour_name}_{rotation_attempts}_{images_taken}.jpg', result_frame)
+                cropped_image = crop_around_frame(result_frame, x_mid, y_mid, radius=80)
+                # you can crop the pic or take the full size: replace cropped_image with result_frame
+                cv2.imwrite(f'photo_{colour_name}_{rotation_attempts}_{images_taken}.jpg', cropped_image)
                 print(f'Photo {rotation_attempts} taken.')
                 captured = True
                 images_taken += 1
